@@ -103,15 +103,15 @@ module.exports = yeoman.generators.Base.extend({
   },
 
   install: function () {
-    this.installDependencies({
-      skipInstall: this.options['skip-install']
-    });
+    // this.installDependencies({
+    //   skipInstall: this.options['skip-install']
+    // });
 
     if (this.ghRepo) {
       var git = this.spawnCommand('git', ['init']);
       git.on('close', function() {
         this.spawnCommand('hub', ['create', '-d', this.description]);
-      });
+      }.bind(this));
     }
     if (this.register) {
       this.spawnCommand('bower', ['register', this.appNameSlug, this.ghUrl]);
@@ -123,6 +123,9 @@ module.exports = yeoman.generators.Base.extend({
       fs.readFileSync(this.destinationPath('bower.json'))
     );
     bow.keywords = this.keywords;
-    this.fs.writeFileSync(JSON.stringify(bow));
+    fs.writeFileSync(
+      this.destinationPath('bower.json'),
+      JSON.stringify(bow, null, 2)
+    );
   }
 });
