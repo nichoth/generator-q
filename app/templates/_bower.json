@@ -1,0 +1,21 @@
+{
+  "name": "<%=appNameSlug%>",
+  "version": "0.0.0",
+  "homepage": "https://github.com/nichoth/<%=appNameSlug%>",
+  "authors": [
+    "nichoth <nichoth@gmail.com>"
+  ],
+  "description": "<%=description%>",
+  "main": "<%=mainFile%>",
+  "keywords": [],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {}
+}
+
