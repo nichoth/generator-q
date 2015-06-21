@@ -13,8 +13,7 @@
   "engines": {
     "node": ">=0.10.0"
   },
-  "scripts": {
-  },
+  "scripts": {},
   "files": [
     "app"
   ],
@@ -22,12 +21,12 @@
     "yeoman-generator"
   ],
   "dependencies": {
+    "async": "^1.2.1",
     "chalk": "^1.0.0",
     "keywords-array": "0.0.0",
     "slug": "^0.9.1",
     "yeoman-generator": "^0.18.9",
     "yosay": "^1.0.2"
   },
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }

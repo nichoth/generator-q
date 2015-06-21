@@ -5,6 +5,7 @@ var slug = require('slug');
 // var yosay = require('yosay');
 var toArray = require('keywords-array');
 var fs = require('fs');
+var async = require('async');
 
 module.exports = yeoman.generators.Base.extend({
   initializing: function () {
@@ -33,7 +34,6 @@ module.exports = yeoman.generators.Base.extend({
     {
       name: 'keywords',
       message: 'keywords',
-      'default': '',
       type: 'input'
     },
     {
@@ -103,29 +103,76 @@ module.exports = yeoman.generators.Base.extend({
   },
 
   install: function () {
-    // this.installDependencies({
-    //   skipInstall: this.options['skip-install']
-    // });
-
-    if (this.ghRepo) {
-      var git = this.spawnCommand('git', ['init']);
-      git.on('close', function() {
-        this.spawnCommand('hub', ['create', '-d', this.description]);
-      }.bind(this));
-    }
-    if (this.register) {
-      this.spawnCommand('bower', ['register', this.appNameSlug, this.ghUrl]);
-    }
   },
+
   end: function() {
-    // write json here b/c easier than template
-    var bow = JSON.parse(
-      fs.readFileSync(this.destinationPath('bower.json'))
-    );
-    bow.keywords = this.keywords;
-    fs.writeFileSync(
-      this.destinationPath('bower.json'),
-      JSON.stringify(bow, null, 2)
-    );
+    var done = this.async();
+    var self = this;
+
+    // write keywords here b/c easier than template
+    function keywords(cb) {
+      var bowJson;
+      fs.readFile(self.destinationPath('bower.json'), function(err, file) {
+        if (err) throw err;
+        bowJson = JSON.parse(file);
+        bowJson.keywords = self.keywords;
+        fs.writeFile(
+          self.destinationPath('bower.json'),
+          JSON.stringify(bowJson, null, 2),
+          cb
+        );
+      }.bind(self));
+    }
+
+    async.parallel([
+      gitStuff.bind(self),
+      keywords.bind(self)
+    ], function() {
+      bowReg.call(self, done);
+    }.bind(self));
+
+    function gitStuff(cb) {
+      var
+        git = self.spawnCommand.bind(self, 'git', ['init']),
+        add = self.spawnCommand.bind(self, 'git', ['add', '.']),
+        commit = self.spawnCommand.bind(self, 'git', ['commit', '-m', 'first commit']),
+        // tag = self.spawnCommand.bind('git', ['tag', 'v0.0.0']),
+        hub = self.spawnCommand.bind(self, 'hub', ['create', '-d', self.description]),
+        push = self.spawnCommand.bind(self, 'git', [
+          'push', '-u', 'origin', 'master', '--follow-tags'
+        ])
+      ;
+      if (self.ghRepo) {
+        git().on('close', function() {
+          async.parallel([
+            function(cb) {
+              add().on('close', function() {
+                commit().on('close', function() {
+                  cb();
+                });
+              });
+            },
+            function(cb) {
+              hub().on('close', cb);
+            }
+          ], function(err) {
+            if (err) throw err;
+            push().on('close', cb);
+          }.bind(self));
+        });
+      } else {
+        cb();
+      }
+    }
+
+    function bowReg(cb) {
+      if (self.register) {
+        self.spawnCommand('bower', ['register', self.appNameSlug, self.ghUrl])
+          .on('close', cb);
+      } else {
+        cb();
+      }
+    }
+
   }
 });
